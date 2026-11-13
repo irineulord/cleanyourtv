@@ -15,17 +15,19 @@
         <item>com.amazon.tv.launcher/com.amazon.tv.launcher.ui.MainSettingsActivity</item>
     </string-array>
 
-    <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
+    <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. With columns=6
+         and fill_dock=false, the sixth slot stays empty. -->
     <string-array name="dock_apps">
-        <item>com.netflix.ninja</item>
-        <item>com.amazon.amazonvideo.livingroom</item>
+        <item>com.netflix.mediaclient</item>
         <item>com.google.android.youtube.tv</item>
-        <item>in.startv.hotstar</item>
+        <item>com.amazon.amazonvideo.livingroom</item>
+        <item>com.wbd.stream</item>
+        <item>com.google.android.youtube.tvmusic</item>
     </string-array>
     <!-- With fewer dock_apps than columns (or a dock app that is not installed), the free dock slots take
          the first grid apps, so the dock never shows a gap. false leaves them empty (#162); a theme can
          set "fill_dock": false. -->
-    <bool name="fill_dock">true</bool>
+    <bool name="fill_dock">false</bool>
 
     <!-- Apps never shown as tiles (e.g. the Live TV app, which the Inputs menu already covers). -->
     <string-array name="hidden_apps">
@@ -329,7 +331,7 @@
     <bool name="dock_band_all">false</bool>
     <!-- The dock band's padding equals the gap between its tiles on all four sides (as far as the grid's edges leave room),
          so its corners are concentric with the tiles' and the spacing reads even. false (the default) keeps the fixed
-         14dp above and below, up to 22dp at the sides and 26dp corners. Can also be set with "dock_even_padding": true in a theme's config.json. -->
+         16dp above and below, up to 24dp at the sides, with corners concentric with the tiles. Can also be set with "dock_even_padding": true in a theme's config.json. -->
     <bool name="dock_even_padding">false</bool>
     <!-- A reorder button (two arrows) in the top bar. Off by default: reordering is also in the Settings
          button's long-press menu, so it needs no extra button on screen. -->
@@ -416,9 +418,10 @@
          for bigger tiles when rows_below_dock is 2 or 3. -->
     <bool name="dock_title">true</bool>
 
-    <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
-         shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
-    <integer name="columns">4</integer>
+    <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are square: 180dp at 4 columns,
+         and shrink to fit from 5 up (about 166dp at 5, 137dp at 6 on a 1080p TV). Six columns give the
+         five pinned apps and the reserved sixth dock slot. -->
+    <integer name="columns">6</integer>
 
     <!-- Basic motion is on; advanced effects are opt-in in the launcher's own Settings screen. -->
     <bool name="animations">true</bool>
@@ -431,8 +434,8 @@
     <!-- Installed launchable apps, including ordinary Android apps. Also settable in config.json. -->
     <bool name="app_library">false</bool>
     <!-- Every app tile is its icon on a card tinted from that icon, name only under the focused tile,
-         instead of each app's own banner. Off by default; a theme can set "uniform_tiles": true. -->
-    <bool name="uniform_tiles">false</bool>
+         instead of each app's own banner. On in this build for the icon-first layout; set false to use banners. -->
+    <bool name="uniform_tiles">true</bool>
     <!-- Optional direct Home picker in the app library: OK toggles the checkmark, checked apps first.
          Off by default; a theme can set "app_library_selection": true (also needs app_library). -->
     <bool name="app_library_selection">false</bool>
@@ -445,8 +448,9 @@
          config.json). They show on Home as if the owner had added them in the App library UI, and stay
          removable there (a removed one stays hidden). For sets where almost no app declares a leanback entry
          (many China-market TVs, e.g. Coocaa 8R145), a fresh Home with app_library on would otherwise be
-         nearly empty. Empty (off) by default, so existing setups change nothing. -->
+         nearly empty. Empty by default; this build pre-seeds Netflix, which declares only MAIN + LAUNCHER. -->
     <string-array name="library_apps" translatable="false">
+        <item>com.netflix.mediaclient</item>
     </string-array>
 
     <!-- Packages the App library catalogue never offers, even with app_library on (config.xml
@@ -473,7 +477,7 @@
          before settling. false: both go straight there, with no bounce, while scrolling stays smooth
          (reduced_motion also removes the overshoot, but scrolls in one jump). Can also be set with
          "focus_overshoot" in a theme's config.json. -->
-    <bool name="focus_overshoot">true</bool>
+    <bool name="focus_overshoot">false</bool>
 
     <!-- One line under the clock: CPU, free memory and free storage. Off by default; a theme can set
          "show_stats": true. Nothing is read, and the clock does not move, while this is false. -->

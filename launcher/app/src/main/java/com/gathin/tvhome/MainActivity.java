@@ -1163,21 +1163,35 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == LAUNCHER_SETTINGS_REQUEST && resultCode == RESULT_OK
-                && data != null && data.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) {
-            getIntent().putExtra(LauncherSettingsActivity.EXTRA_REORDER, true);
-            // The old activity must not consume the pending action, or rebuild a second time in onResume.
-            settingsRecreationPending = true;
-            settingsRevision = settingsRevision();
-            recreate();
-        }
+        if (requestCode != LAUNCHER_SETTINGS_REQUEST || resultCode != RESULT_OK || data == null) return;
+        boolean reorder = data.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false);
+        boolean dock = data.getBooleanExtra(LauncherSettingsActivity.EXTRA_DOCK, false);
+        boolean library = data.getBooleanExtra(LauncherSettingsActivity.EXTRA_LIBRARY, false);
+        if (!reorder && !dock && !library) return;
+        Intent pending = getIntent();
+        if (reorder) pending.putExtra(LauncherSettingsActivity.EXTRA_REORDER, true);
+        if (dock) pending.putExtra(LauncherSettingsActivity.EXTRA_DOCK, true);
+        if (library) pending.putExtra(LauncherSettingsActivity.EXTRA_LIBRARY, true);
+        // The old activity must not consume the pending action, or rebuild a second time in onResume.
+        settingsRecreationPending = true;
+        settingsRevision = settingsRevision();
+        recreate();
     }
 
-    private void startPendingSettingsReorder() {
-        if (settingsRecreationPending || !tilesReady || !hasWindowFocus() || isFinishing()
-                || !getIntent().getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) return;
-        getIntent().removeExtra(LauncherSettingsActivity.EXTRA_REORDER);
-        toggleReorder();
+    /** Runs the action a Launcher settings row asked for once Home has rebuilt and has window focus. */
+    private void startPendingSettingsAction() {
+        if (settingsRecreationPending || !tilesReady || !hasWindowFocus() || isFinishing()) return;
+        Intent intent = getIntent();
+        if (intent.getBooleanExtra(LauncherSettingsActivity.EXTRA_LIBRARY, false)) {
+            intent.removeExtra(LauncherSettingsActivity.EXTRA_LIBRARY);
+            onLibraryRequested();
+        } else if (intent.getBooleanExtra(LauncherSettingsActivity.EXTRA_DOCK, false)) {
+            intent.removeExtra(LauncherSettingsActivity.EXTRA_DOCK);
+            startDockEdit();
+        } else if (intent.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) {
+            intent.removeExtra(LauncherSettingsActivity.EXTRA_REORDER);
+            toggleReorder();
+        }
     }
 
     /** Rebuilds the tiles (and the module cards), then puts focus back where it was. */
@@ -1232,7 +1246,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (pos < 0) hideHero();
             // A newly installed app may have brought a card with it.
             tilesReady = true;
-            startPendingSettingsReorder();
+            startPendingSettingsAction();
             showCardPrompt();
         }
     }
@@ -1286,7 +1300,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (returnToLibrary || libraryFocusPending) focusLibrary();
             else focusTile(pos >= 0 ? pos : returnSlot);
             tilesReady = true;
-            startPendingSettingsReorder();
+            startPendingSettingsAction();
             showCardPrompt();
         });
     }
@@ -1369,7 +1383,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            startPendingSettingsReorder();
+            startPendingSettingsAction();
             if (libraryFocusPending && appLibrary == null) focusLibrary();
             showCardPrompt();
         } else {
@@ -3865,10 +3879,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             pickUp(at);
             Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
         });
+        if (dockRow && fillDockLeavesSlots && adapter.dockFilled() > 1
+                && position < adapter.dockFilled()) {
+            addSettingsMenuRow(rows, popup, R.string.tile_remove_from_dock, () -> removeFromDock(key));
+        }
         if (appLibraryEnabled) addSettingsMenuRow(rows, popup, R.string.library_remove_shortcut, () -> {
             if (LibraryApps.save(this, pkg, false)) reloadApps(false);
             else Toast.makeText(this, R.string.library_save_failed, Toast.LENGTH_LONG).show();
         });
+        addSettingsMenuRow(rows, popup, R.string.uninstall, () -> uninstallApp(pkg));
         // Some firmware has no App info page at all; a row that only toasts "can't open" helps nobody.
         Intent info = SystemSettings.appInfo(this, pkg);
         if (info != null) addSettingsMenuRow(rows, popup, R.string.library_app_info, () -> open(info));
@@ -3890,6 +3909,33 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
         }
         rows.getChildAt(0).requestFocus();
+    }
+
+    /**
+     * Takes a dock app out of the dock and leaves it in the grid. The saved order records a smaller dock, so
+     * the free place stays empty (fill_dock false) and the owner can put another app there later.
+     */
+    private void removeFromDock(String key) {
+        int docked = adapter.dockFilled();
+        List<String> keys = adapter.movableKeys();
+        if (!fillDockLeavesSlots || docked <= 1 || !keys.contains(key)) return;
+        keys.remove(key);
+        Order order = new Order(Order.dockKey(dockApps), keys, docked - 1);
+        if (!Order.save(Order.file(this), order)) {
+            Toast.makeText(this, R.string.reorder_not_saved, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        adapter.setSavedOrder(Order.ranks(order, dockApps), Order.docked(order, dockApps));
+        reloadApps(false);
+    }
+
+    /** Android's uninstall screen, with its own confirmation; system apps and launchers are refused here. */
+    private void uninstallApp(String pkg) {
+        if (!SystemSettings.canUninstall(this, pkg)) {
+            Toast.makeText(this, R.string.not_available, Toast.LENGTH_LONG).show();
+            return;
+        }
+        open(SystemSettings.uninstall(pkg));
     }
 
     private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, Runnable action) {

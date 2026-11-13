@@ -76,6 +76,12 @@ public class DockSlotsTest {
         assertEquals(1, DockSlots.empty(3, 4, 20, false));
     }
 
+    @Test public void fiveDockAppsInSixColumnsLeaveTheReservedSlotEmpty() {
+        assertEquals(1, DockSlots.empty(5, 6, 20, false));
+        assertEquals(0, DockSlots.empty(6, 6, 20, false));
+        assertEquals(4, DockSlots.focusable(5, 5, 1));
+    }
+
     @Test public void fillDockKeepsTheOldBehaviour() {
         assertEquals(0, DockSlots.empty(3, 4, 20, true));
     }

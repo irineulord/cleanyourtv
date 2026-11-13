@@ -48,6 +48,9 @@
     <string name="home_settings_help">כדי להפסיק להשתמש ב־CleanYourTV כמסך הבית, יש לבחור במסך הבית המקורי. כדי לחזור, יש לבחור ב־CleanYourTV. אפליקציית מסך הבית המקורית חייבת להיות פעילה, והטלוויזיה צריכה לתמוך בבחירת מסך בית. אם האפליקציה הושבתה, יש להפעיל תחילה את סקריפט השחזור.</string>
     <string name="launcher_settings">הגדרות מסך הבית</string>
     <string name="native_settings">הגדרות היצרן</string>
+    <string name="settings_personalization">התאמה אישית</string>
+    <string name="settings_screen">מסך וממשק</string>
+    <string name="device_info">פרטי המכשיר</string>
     <string name="columns_label">אפליקציות בשורה</string>
     <string name="dock_opacity_label">עוצמת הרקע בשורת המועדפים</string>
     <string name="animations_state">הנפשות: %1$s</string>
@@ -94,6 +97,8 @@
     <string name="dock_edit_pick_app">עכשיו בחרו את האפליקציה שתופיע שם ולחצו אישור. חזרה לבחירת מקום אחר.</string>
     <string name="tile_add_to_dock">הוספה לשורת המועדפים</string>
     <string name="tile_replace_in_dock">החלפה באפליקציה אחרת</string>
+    <string name="tile_remove_from_dock">הסרה משורת המועדפים</string>
+    <string name="uninstall">הסרת התקנה</string>
     <string name="dock_edit_pick_place">בחרו מקום בשורת המועדפים לאפליקציה הזו ולחצו אישור. חזרה לביטול.</string>
     <string name="reorder">סידור אפליקציות</string>
     <string name="tile_move">העברה</string>

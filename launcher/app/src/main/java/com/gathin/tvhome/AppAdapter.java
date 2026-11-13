@@ -97,9 +97,10 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    static final float FOCUS_SCALE = 1.10f;
-    /** Design size of a tile (dp); tiles shrink from here when the columns don't fit, see tileWidthPx. */
-    static final float DESIGN_W_DP = 180f, DESIGN_H_DP = 101f;
+    static final float FOCUS_SCALE = 1.08f;
+    static final float ADVANCED_FOCUS_SCALE = 1.10f;
+    /** Square tvOS-style tile design size (dp); tiles shrink from here when the columns don't fit. */
+    static final float DESIGN_W_DP = 180f, DESIGN_H_DP = 180f;
 
     /**
      * Tile width for a grid of this inner width: the cell minus room for the focus zoom and the glass
@@ -162,14 +163,14 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         float perItem = (gridHeightPx - reserved) / (rowsBelowDock + 1);
         float tileH = perItem - (dockRow ? ITEM_EXTRA_DP : COMPACT_ITEM_EXTRA_DP) * density;
         int byHeight = Math.round(tileH * DESIGN_W_DP / DESIGN_H_DP);
-        // Shrink at most to MIN_HEIGHT_FIT of the width-only size. Below that the tiles look lost in their wide
-        // columns (2 rows under a titled dock came out at 80dp); the rows that still don't fit run off the bottom
-        // and scroll, and MainActivity keeps the title's room above the dock.
+        // Square tiles are taller than banners, so a row under the dock needs more shrink. Stop at half the
+        // width-only size: below that the tiles look lost in their wide columns; rows that still don't fit run
+        // off the bottom and scroll, and MainActivity keeps the title's room above the dock.
         return Math.max(Math.max(Math.round(80 * density), Math.round(w * MIN_HEIGHT_FIT)), Math.min(w, byHeight));
     }
 
     /** The smallest share of the width-only tile size that fitting rows_below_dock into the height may go to. */
-    static final float MIN_HEIGHT_FIT = 0.85f;
+    static final float MIN_HEIGHT_FIT = 0.50f;
 
     private final Context ctx;
     private final int rowsBelowDock;
@@ -216,6 +217,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final boolean tileMenu;
     /** Tile names and bundled banners that replace the app's own (config.xml, app_labels and app_banners). */
     private final Map<String, String> appLabels, appBanners;
+    /** Icon scale percent (70-130). */
+    private final int iconScale;
     /** Every app tile is its icon on a card tinted from that icon, never its banner (config.xml, uniform_tiles). */
     private final boolean uniformTiles;
     /** Packages drawn from their icon and name even when they have a banner (config.xml icon_tiles). */
@@ -248,6 +251,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.appLabels = cfg.appLabels;
         this.appBanners = cfg.appBanners;
         this.uniformTiles = cfg.uniformTiles;
+        this.iconScale = Math.max(70, Math.min(130, cfg.iconScale));
+        this.iconShare = ICON_SHARE_BASE * (this.iconScale / 100f);
         // Tiles keep their identity across reload(), so a focused tile stays on its app instead of
         // its view being rebound to whatever app now sits in that slot.
         setHasStableIds(true);
@@ -438,19 +443,21 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // tvOS-style tile: a large centred mark, no caption inside the card.
             View icon = v.findViewById(R.id.icon);
             FrameLayout.LayoutParams iconLp = (FrameLayout.LayoutParams) icon.getLayoutParams();
-            iconLp.width = iconLp.height = Math.round(h * ICON_SHARE);
+            iconLp.width = iconLp.height = Math.round(h * iconShare);
             iconLp.bottomMargin = 0;
             icon.setLayoutParams(iconLp);
-        } else if (h < Math.round(DESIGN_H_DP * density)) {
-            // Shrunk tiles (e.g. 5 or 6 columns): scale icon and bottom margin proportionally with tile height so the label does not overlap the icon.
+        } else {
             View icon = v.findViewById(R.id.icon);
             FrameLayout.LayoutParams iconLp = (FrameLayout.LayoutParams) icon.getLayoutParams();
-            float scale = (float) h / (DESIGN_H_DP * density);
-            iconLp.width = iconLp.height = Math.round(48f * density * scale);
-            iconLp.bottomMargin = Math.round(14f * density * scale);
+            float iconScaleFactor = (h < Math.round(DESIGN_H_DP * density))
+                    ? (float) h / (DESIGN_H_DP * density) : 1f;
+            iconLp.width = iconLp.height = Math.round(72f * density * iconScaleFactor * (iconScale / 100f));
+            iconLp.bottomMargin = 0;
             icon.setLayoutParams(iconLp);
-            View label = v.findViewById(R.id.label);
-            label.setPadding(label.getPaddingLeft(), label.getPaddingTop(), label.getPaddingRight(), Math.round(4f * density));
+            if (h < Math.round(DESIGN_H_DP * density)) {
+                View label = v.findViewById(R.id.label);
+                label.setPadding(label.getPaddingLeft(), label.getPaddingTop(), label.getPaddingRight(), Math.round(4f * density));
+            }
         }
         return new Holder(v, listener, animations, advancedEffects, reducedMotion, restNameAlpha, focusOvershoot);
     }
@@ -677,7 +684,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     float focusScale() {
-        return !animations ? 1f : advancedEffects ? 1.12f : 1.10f;
+        return !animations ? 1f : advancedEffects ? ADVANCED_FOCUS_SCALE : FOCUS_SCALE;
     }
 
     /** A vivid colour sampled from the app's banner (or icon), cached per entry; a card's accent when it set one. */
@@ -690,8 +697,10 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return e.ambient;
     }
 
-    /** Share of the tile height the icon takes in uniform_tiles mode (onCreateViewHolder). */
-    private static final float ICON_SHARE = 0.62f;
+    /** Base share of the square tile the icon takes in uniform_tiles mode. */
+    private static final float ICON_SHARE_BASE = 0.70f;
+    private static final float ICON_SHARE = ICON_SHARE_BASE;
+    private float iconShare = ICON_SHARE_BASE;
 
     /**
      * The colour covering most of an icon, for a card that should read as that app: a small saturated badge
@@ -895,9 +904,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return Color.HSVToColor(hsv);
     }
 
-    /** Corner radius for a tile of this width: 16dp at the design width, proportionally less when smaller. */
+    /** Corner radius for a tile of this width: 28dp at the design width, proportionally less when smaller. */
     static float cornerRadius(int tileWidthPx, float density) {
-        return 16f * density * Math.min(1f, tileWidthPx / (DESIGN_W_DP * density));
+        return 28f * density * Math.min(1f, tileWidthPx / (DESIGN_W_DP * density));
     }
 
     static final class Holder extends RecyclerView.ViewHolder {
@@ -936,7 +945,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             card.setOutlineProvider(new ViewOutlineProvider() {
                 @Override
                 public void getOutline(View view, Outline outline) {
-                    // 16dp at the design width, scaled down with the tile so small tiles keep the same shape.
+                    // 28dp at the design width, scaled down with the tile so small tiles keep the same shape.
                     outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadius(view.getWidth(), density));
                 }
             });
@@ -954,7 +963,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 view.animate().cancel();
                 banner.animate().cancel();
                 name.animate().cancel();
-                float scale = !animations ? 1f : advancedEffects ? 1.12f : 1.10f;
+                float scale = !animations ? 1f : advancedEffects ? ADVANCED_FOCUS_SCALE : FOCUS_SCALE;
                 float s = focused ? scale : 1f;
                 if (!animations) {
                     view.setScaleX(1f);

@@ -548,6 +548,18 @@ final class AppLibraryDialog {
                 Toast.makeText(activity, activity.getString(R.string.cant_open, label(app)), Toast.LENGTH_SHORT).show();
             }
         });
+        addAction(rows, R.string.uninstall, () -> {
+            if (!SystemSettings.canUninstall(activity, pkg)) {
+                Toast.makeText(activity, R.string.not_available, Toast.LENGTH_LONG).show();
+                return;
+            }
+            close();
+            try {
+                activity.startActivity(SystemSettings.uninstall(pkg));
+            } catch (ActivityNotFoundException | SecurityException e) {
+                Toast.makeText(activity, activity.getString(R.string.cant_open, label(app)), Toast.LENGTH_SHORT).show();
+            }
+        });
         int menuWidth = dp(220);
         for (int i = 0; i < rows.getChildCount(); i++) {
             TextView title = rows.getChildAt(i).findViewById(R.id.title);

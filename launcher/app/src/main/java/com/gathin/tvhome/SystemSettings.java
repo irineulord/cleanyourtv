@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
@@ -56,6 +57,31 @@ final class SystemSettings {
             return new Intent().setComponent(component);
         }
         return null;
+    }
+
+    /**
+     * Whether the launcher may send pkg to Android's uninstall screen. System apps, home launchers and the
+     * launcher itself are refused here: removing one can leave the TV without a way back.
+     */
+    static boolean canUninstall(Context context, String pkg) {
+        if (pkg == null || pkg.equals(context.getPackageName())) return false;
+        PackageManager pm = context.getPackageManager();
+        try {
+            ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
+            if ((info.flags & ApplicationInfo.FLAG_SYSTEM) != 0) return false;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+        for (ResolveInfo home : pm.queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)) {
+            if (home.activityInfo != null && pkg.equals(home.activityInfo.packageName)) return false;
+        }
+        return true;
+    }
+
+    /** Android's own uninstall screen, which asks the owner to confirm and removes the app only if they do. */
+    static Intent uninstall(String pkg) {
+        return new Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:" + pkg));
     }
 
     /** The TV's App info page for pkg, or null where the firmware has none (CVTE's settings app, #1202). */

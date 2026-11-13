@@ -54,14 +54,15 @@ public class TileFitTest {
     }
 
     @Test
-    public void plainGridFitsFourRowsAtSixColumns() {
-        // dock_row false, rows_below_dock 3: the first row and 3 more under a 12dp top margin.
-        int w = AppAdapter.tileWidthPx(INNER, GRID_H, 6, 3, true, false, D);
+    public void plainGridFitsThreeSquareRowsAtSixColumns() {
+        // dock_row false, rows_below_dock 2: the first row and 2 more under a 12dp top margin. Square tiles
+        // are taller than the old banners, so one fewer row fits before the 80dp tile floor is reached.
+        int w = AppAdapter.tileWidthPx(INNER, GRID_H, 6, 2, true, false, D);
         int itemH = AppAdapter.itemHeightPx(AppAdapter.tileHeightPx(w), false, D);
-        int needed = itemH * 4 + Math.round((AppAdapter.TOP_ROOM_DP + AppAdapter.COMPACT_BOTTOM_ROOM_DP) * D);
+        int needed = itemH * 3 + Math.round((AppAdapter.TOP_ROOM_DP + AppAdapter.COMPACT_BOTTOM_ROOM_DP) * D);
         assertTrue(needed + " > " + GRID_H, needed <= GRID_H + 2);
-        // With the compact spacing the width limit decides, not the height: no extra whitespace between tiles.
-        assertEquals(AppAdapter.tileWidthPx(INNER, 6, D), w);
+        // The height limit decides here: square tiles need the extra shrink to fit the rows.
+        assertTrue(w < AppAdapter.tileWidthPx(INNER, 6, D));
     }
 
     @Test

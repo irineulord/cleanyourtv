@@ -35,6 +35,15 @@
         <item name="android:drawablePadding">0dp</item>
     </style>
 
+    <style name="SettingsHeader">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">#FF9FB3C8</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
     <style name="SettingsRow">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">52dp</item>

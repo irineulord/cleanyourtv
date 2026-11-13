@@ -150,6 +150,8 @@ final class Config {
     final boolean wallpaperTrueColor;
     /** The focused tile and the glass highlight swing past their target before settling (config.xml, focus_overshoot). */
     final boolean focusOvershoot;
+    /** Icon size as percent of default (70-130). */
+    final int iconScale;
     final String vpnApp;
     final boolean showHomeSettingsShortcut;
     /** One line under the clock: CPU, free memory, free storage. Off unless config or a theme turns it on. */
@@ -289,7 +291,7 @@ final class Config {
                    Map<String, String> appBanners, String sourcePanelService, String sourcePanelAction,
                    String sourcePanelExtra, boolean coocaaSources, String inputAction, List<String> inputSources,
                    String inputUriScheme, int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
-                   boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean bootToLiveTv, boolean openOnStartChoice, boolean dockTitle, boolean dockRow, boolean topMenu, boolean launcherSettingsButton, boolean reorderButton, boolean showNetworkPill, boolean showInputsPill, boolean iconOnlyButtons, boolean iconOnlyInputs, boolean libraryButton, boolean showLibraryPill, int wifiLabelWidth, boolean alwaysShowNames, boolean wallpaperTrueColor, boolean focusOvershoot, String vpnApp,
+                   boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean bootToLiveTv, boolean openOnStartChoice, boolean dockTitle, boolean dockRow, boolean topMenu, boolean launcherSettingsButton, boolean reorderButton, boolean showNetworkPill, boolean showInputsPill, boolean iconOnlyButtons, boolean iconOnlyInputs, boolean libraryButton, boolean showLibraryPill, int wifiLabelWidth, boolean alwaysShowNames, boolean wallpaperTrueColor, boolean focusOvershoot, int iconScale, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, String gameDay, boolean appLibrary, boolean appLibrarySelection, boolean libraryOkOpens, boolean uniformTiles, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean restoreKeyServices, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
                    int wallpaperRotationMinutes, int wallpaperDim, int dockOpacity, String wallpaperOrder, boolean overlayApplied,
@@ -358,6 +360,7 @@ final class Config {
         this.alwaysShowNames = alwaysShowNames;
         this.wallpaperTrueColor = wallpaperTrueColor;
         this.focusOvershoot = focusOvershoot;
+        this.iconScale = iconScale;
         this.vpnApp = vpnApp;
         this.showHomeSettingsShortcut = showHomeSettingsShortcut;
         this.showStats = showStats;
@@ -492,6 +495,7 @@ final class Config {
         boolean alwaysShowNames = res.getBoolean(R.bool.always_show_names);
         boolean wallpaperTrueColor = res.getBoolean(R.bool.wallpaper_true_color);
         boolean focusOvershoot = res.getBoolean(R.bool.focus_overshoot);
+        int iconScale = res.getInteger(R.integer.icon_scale);
         boolean wallpaperCaptions = res.getBoolean(R.bool.wallpaper_captions);
         boolean tileMenu = res.getBoolean(R.bool.tile_menu);
         String vpn = res.getString(R.string.vpn_app).trim();
@@ -609,6 +613,7 @@ final class Config {
             alwaysShowNames = bool(json, "always_show_names", alwaysShowNames);
             wallpaperTrueColor = bool(json, "wallpaper_true_color", wallpaperTrueColor);
             focusOvershoot = bool(json, "focus_overshoot", focusOvershoot);
+            iconScale = integer(json, "icon_scale", iconScale, 70, 130);
             wallpaperCaptions = bool(json, "wallpaper_captions", wallpaperCaptions);
             tileMenu = bool(json, "tile_menu", tileMenu);
             vpn = string(json, "vpn_app", vpn);
@@ -692,6 +697,27 @@ final class Config {
         int dockOpacity = json == null ? 100 : integer(json, "dock_opacity", 100, 30, 100);
         dockOpacity = chosenDockOpacity(choices.getInt(DOCK_OPACITY_KEY, -1), dockOpacity);
         clockFormat = choices.getString(CLOCK_FORMAT_KEY, clockFormat);
+        // New on-TV choices for expanded settings (Stage 1: Dock & Appearance)
+        fillDock = choices.getBoolean("fill_dock", fillDock);
+        dockTitle = choices.getBoolean("dock_title", dockTitle);
+        dockGlass = choices.getBoolean("dock_glass", dockGlass);
+        dockBand = choices.getBoolean("dock_band", dockBand);
+        dockEvenPadding = choices.getBoolean("dock_even_padding", dockEvenPadding);
+        singleRow = choices.getBoolean("single_row", singleRow);
+        dockBandAll = choices.getBoolean("dock_band_all", dockBandAll);
+        alwaysShowNames = choices.getBoolean("always_show_names", alwaysShowNames);
+        cinematicHome = choices.getBoolean("cinematic_home", cinematicHome);
+        cinematicDots = choices.getBoolean("cinematic_dots", cinematicDots);
+        cinematicWhiteFocus = choices.getBoolean("cinematic_white_focus", cinematicWhiteFocus);
+        ambientGlow = choices.getBoolean("ambient_glow", ambientGlow);
+        appGlow = choices.getBoolean("app_glow", appGlow);
+        focusOvershoot = choices.getBoolean("focus_overshoot", focusOvershoot);
+        reducedMotion = choices.getBoolean("reduced_motion", reducedMotion);
+        iconScale = choices.getInt("icon_scale", iconScale);
+        glassStyle = choices.getString("glass_style", glassStyle);
+        glowStyle = choices.getString("glow_style", glowStyle);
+        cinematicArt = choices.getInt("cinematic_art", cinematicArt);
+        cinematicScrim = choices.getInt("cinematic_scrim", cinematicScrim);
         String wallpaperOrder = json == null ? WallpaperRotation.ORDER_SHUFFLE
                 : string(json, "wallpaper_order", WallpaperRotation.ORDER_SHUFFLE);
         // An unknown order must not silently change how an existing collection rotates.
@@ -717,22 +743,7 @@ final class Config {
         Festival festival = json == null ? Festival.NONE : Festival.parse(festivalName(json),
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));
 
-        return new Config(dock, fillDock, hidden, libraryApps, libraryExcludedApps, liveTv, liveTvAction, liveTvInputId, packageMap(launchActions), packageMap(appLabels),
-                packageMap(appBanners), panelService, panelAction, panelExtra, coocaaSources, inputAction, inputSources, inputUriScheme, Math.max(1, columns),
-                Math.max(0, rowsBelow), animations, advancedEffects, shamsi, greetingName, moduleCards, reducedMotion, bootToLiveTv,
-                openOnStartChoice, dockTitle, dockRow, topMenu, launcherSettingsButton, reorderButton, showNetworkPill, showInputsPill,
-                iconOnlyButtons, iconOnlyInputs, libraryButton, showLibraryPill, wifiLabelWidth, alwaysShowNames, wallpaperTrueColor, focusOvershoot,
-                vpn, homeSettings, showStats, gameDay, library, librarySelection, libraryOkOpens, uniformTiles, background,
-                Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, restoreKeyServices, wallpaperEnabled, wallpaper,
-                wallpapers, rotationMinutes, wallpaperDim, dockOpacity, wallpaperOrder, applied, festival, inputKeycodes, appKeys, stockHomeRedirect,
-                json == null ? Collections.emptyList() : raceCalendar(json), cinematic, ambientGlow, appGlow, fadeRows,
-                Math.max(0, idleClockMinutes), keyFilter, dockGlass, glowStyle, wallpaperCaptions, handleViewInputs, tileMenu, dockEvenPadding,
-                dockBand, cinematicDots, cinematicWhiteFocus, wifiStatusColor, cinematicScrim, cinematicArt, wallpaperMoods, gamepadPassthrough,
-                consumeVolumeKeys, volumePausesFilter, homeIgnoreChannelKeys, powerOnHome, homeLongPressHome, wifiStatusWarnings, topBarApps, showGreeting, headerWhite, clockWallpaper,
-                Math.max(0, Math.min(90, clockWallpaperDim)), clockGlow, glassStyle, singleRow && dockRow, dockBandAll, lunar, lunarOffset,
-                dateBelowClock, vpnPill, locale, powerOnHomeAlways, inputsConnectedOnly, inputsCecStateOnly,
-                Math.max(0, Math.min(600, openOnStartNetworkWait)), openOnStartOnWake, iconOnlyVpn, clockFormat, backOpensClock, glowSnap,
-                settingsKeyClearTask);
+                return new Config(dock, fillDock, hidden, libraryApps, libraryExcludedApps, liveTv, liveTvAction, liveTvInputId, packageMap(launchActions), packageMap(appLabels), packageMap(appBanners), panelService, panelAction, panelExtra, coocaaSources, inputAction, inputSources, inputUriScheme, Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects, shamsi, greetingName, moduleCards, reducedMotion, bootToLiveTv, openOnStartChoice, dockTitle, dockRow, topMenu, launcherSettingsButton, reorderButton, showNetworkPill, showInputsPill, iconOnlyButtons, iconOnlyInputs, libraryButton, showLibraryPill, wifiLabelWidth, alwaysShowNames, wallpaperTrueColor, focusOvershoot, Math.max(70, Math.min(130, iconScale)), vpn, homeSettings, showStats, gameDay, library, librarySelection, libraryOkOpens, uniformTiles, background, Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, restoreKeyServices, wallpaperEnabled, wallpaper, wallpapers, rotationMinutes, wallpaperDim, dockOpacity, wallpaperOrder, applied, festival, inputKeycodes, appKeys, stockHomeRedirect, json == null ? Collections.emptyList() : raceCalendar(json), cinematic, ambientGlow, appGlow, fadeRows, Math.max(0, idleClockMinutes), keyFilter, dockGlass, glowStyle, wallpaperCaptions, handleViewInputs, tileMenu, dockEvenPadding, dockBand, cinematicDots, cinematicWhiteFocus, wifiStatusColor, cinematicScrim, cinematicArt, wallpaperMoods, gamepadPassthrough, consumeVolumeKeys, volumePausesFilter, homeIgnoreChannelKeys, powerOnHome, homeLongPressHome, wifiStatusWarnings, topBarApps, showGreeting, headerWhite, clockWallpaper, Math.max(0, Math.min(90, clockWallpaperDim)), clockGlow, glassStyle, singleRow && dockRow, dockBandAll, lunar, lunarOffset, dateBelowClock, vpnPill, locale, powerOnHomeAlways, inputsConnectedOnly, inputsCecStateOnly, Math.max(0, Math.min(600, openOnStartNetworkWait)), openOnStartOnWake, iconOnlyVpn, clockFormat, backOpensClock, glowSnap, settingsKeyClearTask);
     }
 
     /**
@@ -776,12 +787,25 @@ final class Config {
             SharedPreferences.Editor editor = choices.edit();
             if (!"absent".equals(token)) editor.remove("columns").remove("animations")
                     .remove("advanced_effects").remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY)
-                    .remove(DOCK_OPACITY_KEY).remove(CLOCK_FORMAT_KEY);
+                    .remove(DOCK_OPACITY_KEY).remove(CLOCK_FORMAT_KEY)
+                    .remove("fill_dock").remove("dock_title").remove("dock_glass").remove("dock_band")
+                    .remove("dock_even_padding").remove("single_row").remove("dock_band_all")
+                    .remove("always_show_names").remove("cinematic_home").remove("cinematic_dots")
+                    .remove("cinematic_white_focus").remove("ambient_glow").remove("app_glow")
+                    .remove("focus_overshoot").remove("reduced_motion").remove("glass_style")
+                    .remove("glow_style").remove("cinematic_art").remove("cinematic_scrim").remove("icon_scale");
             editor.putString(THEME_SIGNATURE_KEY, signature).commit();
         } else if (!seen.equals(signature)) {
             choices.edit().remove("columns").remove("animations").remove("advanced_effects")
                     .remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY).remove(DOCK_OPACITY_KEY)
-                    .remove(CLOCK_FORMAT_KEY).putString(THEME_SIGNATURE_KEY, signature).commit();
+                    .remove(CLOCK_FORMAT_KEY)
+                    .remove("fill_dock").remove("dock_title").remove("dock_glass").remove("dock_band")
+                    .remove("dock_even_padding").remove("single_row").remove("dock_band_all")
+                    .remove("always_show_names").remove("cinematic_home").remove("cinematic_dots")
+                    .remove("cinematic_white_focus").remove("ambient_glow").remove("app_glow")
+                    .remove("focus_overshoot").remove("reduced_motion").remove("glass_style")
+                    .remove("glow_style").remove("cinematic_art").remove("cinematic_scrim").remove("icon_scale")
+                    .putString(THEME_SIGNATURE_KEY, signature).commit();
         }
     }
 

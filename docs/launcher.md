@@ -51,6 +51,7 @@ Click **Settings** for the TV's own settings. Hold OK on it for its menu:
 The launcher's own page has these rows, top to bottom:
 
 - **Reorder apps**, only with `launcher_settings_button`, the same as the menu's.
+- **App library** opens the installed-app list, and **Edit dock**, with `dock_row`, opens the dock editor.
 - **Apps per row** 4, 5, 6 or 7; **Rows below dock** 0 to 3, how many rows of tiles stay visible under the
   dock band; **Dock band opacity** 100%, 70%, 50% or 30%. The last two only do anything while the dock is
   its own row (`dock_row`, on by default).
@@ -65,8 +66,8 @@ The launcher's own page has these rows, top to bottom:
   time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
 - **Follow theme (reset on-TV choices)**, which clears every choice above. Pushing or resetting a theme
   clears them too.
-- **Choose default home** opens Android's home picker, and **TV system settings** the TV's own settings
-  page.
+- **Choose default home** opens Android's home picker, **TV system settings** the TV's own settings
+  page, and **Wi-Fi** or **Device info** open those pages directly.
 
 **Change the default home:** Launcher settings and the optional Default-home tile
 (`show_home_settings_shortcut`) open Android's home picker. Choose the original launcher to stop using

@@ -58,7 +58,7 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         band.setColor(translucent ? 0x8C121014 : (Math.round(opacity * 2.55f) << 24) | 0x141416);
         edge.setStyle(Paint.Style.STROKE);
         edge.setStrokeWidth(density);
-        edge.setColor(lightGlass ? 0x38FFFFFF : translucent ? 0x26FFFFFF : 0x1FFFFFFF);
+        edge.setColor(lightGlass ? 0x38FFFFFF : translucent ? 0x26FFFFFF : 0x2EFFFFFF);
     }
 
     /** Concentric corners: the band's radius is the tiles' radius plus the band's padding around them. */
@@ -110,13 +110,13 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
             }
         }
         if (!any) return;
-        float pad = 14 * density;
+        float pad = 16 * density;
         // The band can only draw inside the grid, and the first and last dock tiles sit 12dp in from its
-        // edges: a full 14dp at the sides sliced the rounded ends flat (#454). Keep the sides, with the
+        // edges: a full 16dp at the sides sliced the rounded ends flat (#454). Keep the sides, with the
         // 1dp edge line, inside the grid; the top and bottom have room.
-        // 22dp at the sides (the grid's 10dp padding makes room): a focused first or last tile grows about 7dp
+        // 24dp at the sides (the grid's 10dp padding makes room): a focused first or last tile grows about 7dp
         // outwards and still keeps about the band's top margin from its rounded end.
-        float sidePad = 22 * density;
+        float sidePad = 24 * density;
         float side = Math.max(0f, Math.min(sidePad, Math.min(rect.left, parent.getWidth() - rect.right) - density));
         float radius = AppAdapter.cornerRadius(cardWidth, density);
         if (evenPadding) {
@@ -128,9 +128,9 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
             rect.inset(-even, -even);
             radius = radiusPx(radius, even);
         } else {
-            // dock_even_padding off: the band as before, with its fixed 26 dp corners.
+            // dock_even_padding off: keep the band's corners concentric with the square tiles.
             rect.inset(singleRow ? -sidePad : -side, -pad);
-            radius = 26 * density;
+            radius = radiusPx(radius, pad);
         }
         if (singleRow) {
             // Tiles past the screen's edge: the band stops at the grid's edge with its rounded end instead of being
