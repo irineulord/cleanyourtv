@@ -565,4 +565,6 @@
     <!-- Tiles drawn from the app's icon and name instead of its banner (for banners that crop badly). -->
     <string-array name="icon_tiles" translatable="false">
     </string-array>
+    <!-- Icon size as a percent of the default (70-130). -->
+    <integer name="icon_scale">100</integer>
 </resources>

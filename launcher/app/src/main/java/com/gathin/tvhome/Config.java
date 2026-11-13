@@ -706,7 +706,7 @@ final class Config {
         singleRow = choices.getBoolean("single_row", singleRow);
         dockBandAll = choices.getBoolean("dock_band_all", dockBandAll);
         alwaysShowNames = choices.getBoolean("always_show_names", alwaysShowNames);
-        cinematicHome = choices.getBoolean("cinematic_home", cinematicHome);
+        cinematic = choices.getBoolean("cinematic_home", cinematic);
         cinematicDots = choices.getBoolean("cinematic_dots", cinematicDots);
         cinematicWhiteFocus = choices.getBoolean("cinematic_white_focus", cinematicWhiteFocus);
         ambientGlow = choices.getBoolean("ambient_glow", ambientGlow);
